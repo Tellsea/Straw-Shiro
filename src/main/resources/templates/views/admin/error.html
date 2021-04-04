@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"><head>
-    <div th:replace="/admin/common/head"></div>
+    <div th:replace="admin/common/head"></div>
 
     <style>
         .error .clip .shadow {height:180px;}
@@ -63,7 +63,7 @@
         </div>
     </div>
 </div>
-<div th:replace="/admin/common/js"></div>
+<div th:replace="admin/common/js"></div>
 <script>
     function randomNum() {
         return Math.floor(Math.random() * 9) + 1;

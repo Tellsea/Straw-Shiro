@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
 <head>
-    <div th:replace="/admin/common/head"></div>
+    <div th:replace="admin/common/head"></div>
 
     <style>
         .layui-card {
@@ -371,7 +371,7 @@
     </div>
 </div>
 
-<div th:replace="/admin/common/js"></div>
+<div th:replace="admin/common/js"></div>
 <script>
     layui.use(['layer', 'miniTab', 'echarts'], function () {
         var $ = layui.jquery,

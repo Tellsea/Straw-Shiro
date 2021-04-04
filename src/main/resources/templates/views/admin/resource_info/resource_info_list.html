@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro"><head>
 <head>
-    <div th:replace="/admin/common/head"></div>
+    <div th:replace="admin/common/head"></div>
     <link rel="stylesheet" th:href="@{/static/layuimini/js/lay-module/dtree/dtree.css}">
     <link rel="stylesheet" th:href="@{/static/layuimini/js/lay-module/dtree/font/dtreefont.css}">
 
@@ -97,7 +97,7 @@
     </form>
 </div>
 
-<div th:replace="/admin/common/js"></div>
+<div th:replace="admin/common/js"></div>
 <script>
     let resourceInfoUpdate = false;
     let resourceInfoDelete = false;
