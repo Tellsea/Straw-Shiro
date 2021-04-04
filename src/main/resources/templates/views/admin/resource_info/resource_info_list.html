@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro"><head>
+<head>
+    <div th:replace="/admin/common/head"></div>
+    <link rel="stylesheet" th:href="@{/static/layuimini/js/lay-module/dtree/dtree.css}">
+    <link rel="stylesheet" th:href="@{/static/layuimini/js/lay-module/dtree/font/dtreefont.css}">
+
+    <style>
+        .layui-btn:not(.layui-btn-lg ):not(.layui-btn-sm):not(.layui-btn-xs) {
+            height: 34px;
+            line-height: 34px;
+            padding: 0 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="layuimini-container">
+    <div class="layuimini-main">
+        <div>
+            <div class="layui-btn-group">
+                <button class="layui-btn layui-btn-sm" id="add" shiro:hasPermission="system:resourceInfo:save">新增菜单</button>
+                <button class="layui-btn layui-btn-sm" id="btn-expand">全部展开</button>
+                <button class="layui-btn layui-btn-sm" id="btn-fold">全部折叠</button>
+            </div>
+            <table id="munu-table" class="layui-table" lay-filter="munu-table" style="margin: 0;"></table>
+        </div>
+    </div>
+</div>
+
+<div id="dataFormModal" style="display: none; padding: 10px;">
+    <form class="layui-form" id="dataForm" lay-filter="dataFormFilter">
+        <input type="hidden" name="id">
+        <div class="layui-form-item">
+            <label class="layui-form-label">上级菜单</label>
+            <div class="layui-input-block">
+                <input type="text" placeholder="主目录" autocomplete="off" id="pidText" class="layui-input" readonly>
+                <input type="hidden" name="pid" id="pid" value="0" lay-verify="required">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">权限类型</label>
+            <div class="layui-input-block">
+                <input type="radio" name="type" value="1" title="菜单" checked="">
+                <input type="radio" name="type" value="2" title="按钮">
+                <input type="radio" name="type" value="3" title="链接">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">图标</label>
+            <div class="layui-input-block">
+                <input type="text" id="iconPickerFa" lay-filter="iconPickerFa" placeholder="请选择图标" autocomplete="off"
+                       class="layui-input">
+                <input type="hidden" id="icon" name="icon">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">权限名称</label>
+            <div class="layui-input-block">
+                <input type="text" name="name" lay-verify="required" placeholder="请输入权限名称" autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">访问路径</label>
+            <div class="layui-input-block">
+                <input type="text" name="url" autocomplete="off" placeholder="请输入访问路径"
+                       class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">权限标识</label>
+            <div class="layui-input-block">
+                <input type="text" name="perms" placeholder="请输入权限标识" autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">是否可见</label>
+            <div class="layui-input-block">
+                <input type="radio" name="isVisible" value="1" title="是" checked="">
+                <input type="radio" name="isVisible" value="2" title="否">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">排序</label>
+            <div class="layui-input-block">
+                <input type="number" name="sort" lay-verify="required" value="0" placeholder="请输入排序" autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button type="submit" class="layui-btn layui-btn-normal" lay-submit lay-filter="dataFormSubmit">保存</button>
+                <button type="button" class="layui-btn layui-btn-primary" id="dataFormReset">取消</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div th:replace="/admin/common/js"></div>
+<script>
+    let resourceInfoUpdate = false;
+    let resourceInfoDelete = false;
+</script>
+<script shiro:hasPermission="system:resourceInfo:update">resourceInfoUpdate = true;</script>
+<script shiro:hasPermission="system:resourceInfo:delete">resourceInfoDelete = true;</script>
+<script>
+    layui.use(['table', 'treetable', 'iconPickerFa', 'dtree', 'form'], function () {
+        let $ = layui.jquery,
+            table = layui.table,
+            iconPickerFa = layui.iconPickerFa,
+            dtree = layui.dtree,
+            form = layui.form,
+            treetable = layui.treetable;
+
+        let active = {
+            dataModelType: 1,
+            openDataFormModal() {
+                let title = active.dataModelType == 1 ? '新增表单' : '编辑表单';
+                layer.open({
+                    title: title
+                    , type: 1
+                    , content: $('#dataFormModal')
+                    , area: ['600px', '500px']
+                    , maxmin: true
+                    , cancel: function () {
+                        active.closeDataFormModal();
+                    }
+                });
+            },
+            closeDataFormModal() {
+                $('#dataForm')[0].reset();
+                $("#pid").val('0');
+                layer.closeAll();
+            },
+        };
+
+        // 渲染表格
+        treetable.render({
+            treeColIndex: 1,
+            treeSpid: 0,
+            treeIdName: 'id',
+            treePidName: 'pid',
+            elem: '#munu-table',
+            url: '/system/resourceInfo/listByTable',
+            page: false,
+            cols: [ [
+                {type: 'numbers'},
+                {field: 'name', title: '权限名称'},
+                {field: 'perms', title: '权限标识'},
+                {
+                    field: 'type', title: '类型', align: 'center',  width: 90, templet: function (d) {
+                        if (d.type == 1) {
+                            return '<span class="layui-badge layui-bg-green">菜单</span>';
+                        } if (d.type == 2) {
+                            return '<span class="layui-badge layui-bg-blue">按钮</span>';
+                        } else if (d.type == 3) {
+                            return '<span class="layui-badge layui-bg-orange">链接</span>';
+                        } else {
+                            return '<span class="layui-badge-rim">未使用</span>';
+                        }
+                    }
+                },
+                {
+                    field: 'icon', title: '图标', align: 'center',  width: 60, templet: function (d) {
+                        return '<i class="fa ' + d.icon + '"></i>';
+                    }
+                },
+                {field: 'url', title: '菜单url'},
+                {field: 'sort', align: 'center',  width: 60, title: '排序'},
+                {field: 'isVisible', align: 'center',  width: 90, title: '是否显示', templet: function (d) {
+                        if (d.isVisible == 1) {
+                            return '是';
+                        } else if (d.isVisible == 2) {
+                            return '否';
+                        }
+                    }},
+                { width: 130, align: 'center', title: '操作', templet: function (d) {
+                        let dom = '';
+                        if (resourceInfoUpdate) dom += '<a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="edit">修改</a>';
+                        if (resourceInfoDelete) dom += '<a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>';
+                        return dom;
+                    }}
+            ]]
+        });
+
+        // 选择上级目录
+        $('#pidText').on('click', function () {
+            layer.open({
+                type: 1,
+                title: "选择上级菜单",
+                area: ["400px", "80%"],
+                content: '<ul id="openTree" class="dtree" data-id="0"></ul>',
+                btn: ['确认选择'],
+                success: function (layero, index) {
+                    let dataTree = dtree.render({
+                        elem: "#openTree",
+                        url: "/system/resourceInfo/listByDTree",
+                        menubar: true,
+                        done: function (data, obj, first) {
+                            dtree.dataInit("openTree", $("#pid").val().toString());
+                        }
+                    });
+                    // 绑定节点的双击
+                    dtree.on("nodedblclick('openTree')", function (obj) {
+                        $("#pid").val(obj.param.nodeId);
+                        $("#pidText").val(obj.param.context);
+                        layer.close(index);
+                    });
+                },
+                yes: function (index, layero) {
+                    let param = dtree.getNowParam("openTree");
+                    $("#pid").val(param.nodeId);
+                    $("#pidText").val(param.context);
+                    layer.close(index);
+                }
+            });
+        });
+
+        iconPickerFa.render({
+            // 选择器，推荐使用input
+            elem: '#iconPickerFa',
+            // fa 图标接口
+            url: "/static/layuimini/lib/font-awesome-4.7.0/less/variables.less",
+            // 数据类型：fontClass/unicode，推荐使用fontClass
+            type: 'fontClass',
+            // 是否开启搜索：true/false，默认true
+            search: true,
+            // 是否开启分页：true/false，默认true
+            page: true,
+            // 每页显示数量，默认12
+            limit: 50,
+            // 点击回调
+            click: function (data) {
+                $('#icon').val(data.icon);
+            }
+        });
+
+        $('#add').on('click', function () {
+            active.dataModelType = 1;
+            active.openDataFormModal();
+        });
+
+        // 展开/折叠
+        $('#btn-expand').on('click', function () {
+            treetable.expandAll('#munu-table');
+        });
+        $('#btn-fold').on('click', function () {
+            treetable.foldAll('#munu-table');
+        });
+
+        // 监听行按钮
+        table.on('tool(munu-table)', function (obj) {
+            let data = obj.data;
+            let layEvent = obj.event;
+            if (layEvent === 'edit') {
+                // 回显数据
+                active.dataModelType = 2;
+                form.val('dataFormFilter', data);
+                $("#pidText").val(data.pidName);
+                iconPickerFa.checkIcon('iconPickerFa', data.icon);
+                active.openDataFormModal();
+            } else if (layEvent === 'del') {
+                layer.confirm('确定删除该数据吗？', function (index) {
+                    $.ajax({
+                        type: 'post',
+                        url: '/system/resourceInfo/deleteById',
+                        data: {id: data.id},
+                        dataType: 'json',
+                        success: function (res) {
+                            if (res.code == 200) {
+                                layer.msg(res.msg, {time: 2000, icon: 1}, function () {
+                                    window.location.reload();
+                                });
+                            } else {
+                                layer.msg(res.msg, {time: 2000, icon: 2});
+                            }
+                        },
+                        error: function (res) {
+                            layer.msg('请求失败', {time: 2000, icon: 2});
+                        }
+                    });
+                });
+            }
+        });
+
+        // 监听表单取消
+        $('#dataFormReset').on('click', function () {
+            active.closeDataFormModal();
+        });
+        //监听表单提交
+        form.on('submit(dataFormSubmit)', function (data) {
+            $.ajax({
+                type: 'post',
+                url: active.dataModelType == 1 ? '/system/resourceInfo/save' : '/system/resourceInfo/updateById',
+                data: data.field,
+                dataType: 'json',
+                success: function (res) {
+                    if (res.code == 200) {
+                        layer.msg(res.msg, {time: 2000, icon: 1}, function () {
+                            window.location.reload();
+                        });
+                    } else {
+                        layer.msg(res.msg, {time: 2000, icon: 2});
+                    }
+                },
+                error: function (res) {
+                    layer.msg('请求失败', {time: 2000, icon: 2});
+                }
+            });
+            return false;
+        });
+    });
+</script>
+</body>
+</html>

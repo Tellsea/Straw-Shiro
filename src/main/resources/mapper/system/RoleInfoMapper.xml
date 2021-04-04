@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.tellsea.module.system.mapper.RoleInfoMapper">
+
+    <select id="countByTable" resultType="java.lang.Integer">
+        SELECT count(A.id) FROM role_info A
+        <include refid="search"/>
+    </select>
+
+    <select id="listByTable" resultType="cn.tellsea.module.system.vo.RoleInfoVo">
+        SELECT
+        <include refid="allField"/>
+        FROM role_info A
+        <include refid="search"/>
+        limit #{entity.offset}, #{entity.limit}
+    </select>
+
+    <select id="listByUserId" resultType="cn.tellsea.module.system.entity.RoleInfo">
+        select B.*
+        from map_user_role A
+        left join role_info B on A.role_id = B.id
+        where A.user_id = #{userId}
+    </select>
+
+    <sql id="allField">
+          A.id, A.`name`, A.role, A.description, A.create_user, A.create_time, A.`status`
+    </sql>
+
+    <sql id="search">
+        where A.status = 1
+        <if test="entity.name != null and entity.name != ''">
+            and A.name like '%${entity.name}%'
+        </if>
+    </sql>
+</mapper>

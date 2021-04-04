@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <div th:replace="/admin/common/head"></div>
+    <link rel="stylesheet" th:href="@{/static/layuimini/js/lay-module/dtree/dtree.css}">
+    <link rel="stylesheet" th:href="@{/static/layuimini/js/lay-module/dtree/font/dtreefont.css}">
+</head>
+<body>
+<div class="layuimini-container">
+    <div class="layuimini-main">
+
+        <form class="layui-form" id="searchForm" lay-filter="searchFormFilter">
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">账号</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="name" placeholder="请输入账号" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">姓名</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="nickName" placeholder="请输入姓名" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">电话</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="phone" placeholder="请输入电话" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <button type="submit" class="layui-btn layui-btn-sm layui-btn-normal" lay-submit
+                            lay-filter="searchSubmit"><i class="layui-icon"></i>搜索
+                    </button>
+                    <button type="button" class="layui-btn layui-btn-sm layui-btn-primary"
+                            id="searchReset"><i class="layui-icon layui-icon-refresh"></i>重置
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <!-- 表头、表、操作按钮 -->
+        <script type="text/html" id="toolbar">
+            <div class="layui-btn-container">
+                <button class="layui-btn layui-btn-normal layui-btn-sm data-add-btn" lay-event="add"
+                        shiro:hasPermission="system:userInfo:save">
+                    <i class="layui-icon layui-icon-addition"></i>新增
+                </button>
+            </div>
+        </script>
+        <table class="layui-hide" id="currentTableId" lay-filter="currentTableFilter"></table>
+    </div>
+</div>
+
+<div id="dataFormModal" style="display: none; padding: 10px;">
+    <form class="layui-form layuimini-form" id="dataForm" lay-filter="dataFormFilter">
+        <input type="hidden" name="id">
+        <div class="layui-form-item">
+            <label class="layui-form-label required">账号</label>
+            <div class="layui-input-block">
+                <input type="text" name="name" lay-verify="required" placeholder="请输入账号(登录账号)" autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label required">姓名</label>
+            <div class="layui-input-block">
+                <input type="text" name="nickName" lay-verify="required" placeholder="请输入姓名" autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label required">角色</label>
+            <div class="layui-input-block">
+                <div id="xmSelect"></div>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">性别</label>
+            <div class="layui-input-block">
+                <input type="radio" name="sex" value="1" title="男" checked="">
+                <input type="radio" name="sex" value="2" title="女">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label required">电话号码</label>
+            <div class="layui-input-block">
+                <input type="text" name="phone" lay-verify="required" placeholder="请输入简介" autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">简介</label>
+            <div class="layui-input-block">
+                <textarea placeholder="请输入内容" name="description" class="layui-textarea"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button type="submit" class="layui-btn layui-btn-normal" lay-submit lay-filter="dataFormSubmit">保存</button>
+                <button type="button" class="layui-btn layui-btn-primary" id="dataFormReset">取消</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div id="detailFormModal" style="display: none; padding: 10px;">
+    <form class="layui-form" id="detailForm" lay-filter="detailFormFilter">
+        <div class="layui-form-item">
+            <label class="layui-form-label">账号</label>
+            <div class="layui-input-block">
+                <input type="text" name="name" readonly class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">姓名</label>
+            <div class="layui-input-block">
+                <input type="text" name="nickName" readonly class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">角色</label>
+            <div class="layui-input-block">
+                <input type="text" name="roleName" readonly class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">性别</label>
+            <div class="layui-input-block">
+                <input type="text" name="sex" readonly class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">电话号码</label>
+            <div class="layui-input-block">
+                <input type="text" name="phone" readonly class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">简介</label>
+            <div class="layui-input-block">
+                <textarea readonly name="description" class="layui-textarea"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button type="button" class="layui-btn layui-btn-primary" id="detailFormReset">关闭</button>
+            </div>
+        </div>
+    </form>
+</div>
+<div th:replace="/admin/common/js"></div>
+<script th:src="@{/static/layuimini/js/lay-module/xm-select/xm-select.js}"></script>
+<script>
+    let userInfoDetail = false;
+    let userInfoUpdate = false;
+    let userInfoResetPwd = false;
+    let userInfoDelete = false;
+</script>
+<script shiro:hasPermission="system:userInfo:detail">userInfoDetail = true;</script>
+<script shiro:hasPermission="system:userInfo:update">userInfoUpdate = true;</script>
+<script shiro:hasPermission="system:userInfo:resetPwd">userInfoResetPwd = true;</script>
+<script shiro:hasPermission="system:userInfo:delete">userInfoDelete = true;</script>
+<script>
+    layui.use(['element', 'form', 'table'], function () {
+        let $ = layui.jquery,
+            form = layui.form,
+            table = layui.table;
+
+        let roleSelect;
+        let active = {
+            dataModelType: 1,
+            openDataFormModal() {
+                let title = active.dataModelType == 1 ? '新增表单' : '编辑表单';
+                layer.open({
+                    title: title
+                    , type: 1
+                    , content: $('#dataFormModal')
+                    , area: ['600px', '500px']
+                    , maxmin: true
+                    , cancel: function () {
+                        active.closeDataFormModal();
+                    }
+                });
+            },
+            closeDataFormModal() {
+                $('#dataForm')[0].reset();
+                roleSelect.setValue([]);
+                layer.closeAll();
+            },
+            resetTable(data) {
+                table.reload('currentTableId', {page: {curr: 1}, where: data}, 'data');
+            }
+        };
+
+        table.render({
+            elem: '#currentTableId',
+            method: 'post',
+            url: '/system/userInfo/listByTable',
+            toolbar: '#toolbar',
+            defaultToolbar: ['filter', 'exports', 'print'],
+            page: true,
+            limit: 20,
+            limits: [20, 40, 60, 80, 100],
+            cols: [ [
+                {type: "numbers", title: '序号'},
+                {field: 'name', title: '账号', width: 100},
+                {field: 'nickName', title: '姓名', width: 100},
+                {field: 'roleName', title: '角色'},
+                {
+                    field: 'sex', title: '性别', align: 'center', width: 80, templet: function (d) {
+                        let sexArr = ['', '男', '女'];
+                        return sexArr[d.sex];
+                    }
+                },
+                {field: 'phone', title: '电话号码'},
+                //{field: 'description', title: '简介'},
+                {field: 'loginTimes', title: '登录次数', sort: true, align: 'center', width: 120},
+                //{field: 'lastLoginTime', title: '最后登录时间', width: 160},
+                {field: 'createTime', title: '创建时间', width: 160},
+                {
+                    title: '操作', width: 240, align: "center", templet: function () {
+                        let dom = '';
+                        if (userInfoDetail) dom += '<a shiro:hasPermission="system:userInfo:detail" class="layui-btn layui-btn-xs" lay-event="detail">详情</a>';
+                        if (userInfoUpdate) dom += '<a shiro:hasPermission="system:userInfo:edit"  class="layui-btn layui-btn-xs layui-btn-normal" lay-event="edit">编辑</a>';
+                        if (userInfoResetPwd) dom += '<a shiro:hasPermission="system:userInfo:resetPwd"  class="layui-btn layui-btn-xs layui-btn-warm" lay-event="resetPwd">重置密码</a>';
+                        if (userInfoDelete) dom += '<a shiro:hasPermission="system:userInfo:delete"  class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a>';
+                        return dom;
+                    }
+                }
+            ]]
+        });
+
+        $.ajax({
+            type: 'get',
+            url: '/system/roleInfo/listByAll',
+            data: {},
+            dataType: 'json',
+            success: function (res) {
+                if (res.code == 200) {
+                    let roleList = [];
+                    for (let i = 0; i < res.data.length; i++) {
+                        roleList.push({
+                            name: res.data[i].name,
+                            value: res.data[i].id
+                        });
+                    }
+                    roleSelect = xmSelect.render({
+                        el: '#xmSelect',
+                        tips: '请选择角色',
+                        filterable: true,
+                        name: 'roleIds',
+                        layVerify: 'required',
+                        toolbar: {show: true},
+                        data: roleList
+                    });
+                } else {
+                    layer.msg('角色查询失败', {time: 2000, icon: 2});
+                }
+            },
+            error: function (res) {
+                layer.msg('角色查询请求失败', {time: 2000, icon: 2});
+            }
+        });
+
+        // 监听搜索
+        form.on('submit(searchSubmit)', function (data) {
+            active.resetTable(data.field);
+            return false;
+        });
+        // 监听重置
+        $('#searchReset').on('click', function () {
+            $('#searchForm')[0].reset();
+            active.resetTable(form.val('searchFormFilter'));
+        });
+
+        // 监听头部按钮
+        table.on('toolbar(currentTableFilter)', function (obj) {
+            if (obj.event === 'add') {
+                active.dataModelType = 1;
+                active.openDataFormModal();
+            }
+        });
+
+        // 监听行按钮
+        table.on('tool(currentTableFilter)', function (obj) {
+            let data = obj.data;
+            if (obj.event === 'detail') {
+                let sexArr = ['', '男', '女'];
+                data.sex = sexArr[data.sex];
+                form.val('detailFormFilter', data);
+                layer.open({
+                    title: '详细信息'
+                    , type: 1
+                    , content: $('#detailFormModal')
+                    , area: ['600px', '500px']
+                    , maxmin: true
+                });
+            } else if (obj.event === 'edit') {
+                // 回显数据
+                active.dataModelType = 2;
+                form.val('dataFormFilter', data);
+                roleSelect.setValue(data.roleIds.split(','));
+                active.openDataFormModal();
+            } else if (obj.event === 'resetPwd') {
+                layer.confirm('确定重置密码吗？', function (index) {
+                    $.ajax({
+                        type: 'post',
+                        url: '/system/userInfo/resetPwd',
+                        data: {id: data.id},
+                        dataType: 'json',
+                        success: function (res) {
+                            if (res.code == 200) {
+                                layer.msg(res.msg, {time: 2000, icon: 1});
+                            } else {
+                                layer.msg(res.msg, {time: 2000, icon: 2});
+                            }
+                        },
+                        error: function (res) {
+                            layer.msg('请求失败', {time: 2000, icon: 2});
+                        }
+                    });
+                });
+            } else if (obj.event === 'del') {
+                layer.confirm('确定删除该数据吗？', function (index) {
+                    $.ajax({
+                        type: 'post',
+                        url: '/system/userInfo/deleteById',
+                        data: {id: data.id},
+                        dataType: 'json',
+                        success: function (res) {
+                            if (res.code == 200) {
+                                layer.msg(res.msg, {time: 2000, icon: 1}, function () {
+                                    window.location.reload();
+                                });
+                            } else {
+                                layer.msg(res.msg, {time: 2000, icon: 2});
+                            }
+                        },
+                        error: function (res) {
+                            layer.msg('请求失败', {time: 2000, icon: 2});
+                        }
+                    });
+                });
+            }
+        });
+
+        // 监听详情表单关闭
+        $('#detailFormReset').on('click', function () {
+            $('#detailForm')[0].reset();
+            layer.closeAll();
+        });
+        // 监听表单取消
+        $('#dataFormReset').on('click', function () {
+            active.closeDataFormModal();
+        });
+        //监听表单提交
+        form.on('submit(dataFormSubmit)', function (data) {
+            $.ajax({
+                type: 'post',
+                url: active.dataModelType == 1 ? '/system/userInfo/save' : '/system/userInfo/updateById',
+                data: data.field,
+                dataType: 'json',
+                success: function (res) {
+                    if (res.code == 200) {
+                        layer.msg(res.msg, {time: 2000, icon: 1}, function () {
+                            window.location.reload();
+                        });
+                    } else {
+                        layer.msg(res.msg, {time: 2000, icon: 2});
+                    }
+                },
+                error: function (res) {
+                    layer.msg('请求失败', {time: 2000, icon: 2});
+                }
+            });
+            return false;
+        });
+    });
+</script>
+
+</body>
+</html>

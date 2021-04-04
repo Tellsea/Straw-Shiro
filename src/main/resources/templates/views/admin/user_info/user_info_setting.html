@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <div th:replace="/admin/common/head"></div>
+
+    <style>
+        .layui-form-item .layui-input-company {width: auto;padding-right: 10px;line-height: 38px;}
+    </style>
+</head>
+<body>
+<div class="layuimini-container">
+    <div class="layuimini-main">
+
+        <div class="layui-row">
+            <div class="layui-col-md6 layui-col-md-offset3">
+                <div class="layui-tab layui-tab-brief" lay-filter="docDemoTabBrief">
+                    <ul class="layui-tab-title">
+                        <li class="layui-this">基本信息</li>
+                        <li>修改密码</li>
+                    </ul>
+                    <div class="layui-tab-content">
+                        <div class="layui-tab-item layui-show">
+                            <div class="layui-form layuimini-form">
+                                <input type="hidden" name="type" value="1">
+                                <div class="layui-form-item">
+                                    <label class="layui-form-label required">账号</label>
+                                    <div class="layui-input-block">
+                                        <input type="text" name="name" lay-verify="required" placeholder="请输入账号(登录账号)" autocomplete="off"
+                                               th:value="${userInfoVo.name}" class="layui-input">
+                                        <tip>登录账号是唯一标识</tip>
+                                    </div>
+                                </div>
+                                <div class="layui-form-item">
+                                    <label class="layui-form-label required">姓名</label>
+                                    <div class="layui-input-block">
+                                        <input type="text" name="nickName" lay-verify="required" placeholder="请输入姓名" autocomplete="off"
+                                               th:value="${userInfoVo.nickName}" class="layui-input">
+                                    </div>
+                                </div>
+                                <div class="layui-form-item">
+                                    <label class="layui-form-label required">性别</label>
+                                    <div class="layui-input-block">
+                                        <input type="radio" name="sex" value="1" title="男" th:checked="${userInfoVo.sex == 1}">
+                                        <input type="radio" name="sex" value="2" title="女" th:checked="${userInfoVo.sex == 2}">
+                                    </div>
+                                </div>
+                                <div class="layui-form-item">
+                                    <label class="layui-form-label required">电话号码</label>
+                                    <div class="layui-input-block">
+                                        <input type="text" name="phone" lay-verify="required" placeholder="请输入简介" autocomplete="off"
+                                               th:value="${userInfoVo.phone}" class="layui-input">
+                                    </div>
+                                </div>
+                                <div class="layui-form-item">
+                                    <label class="layui-form-label">简介</label>
+                                    <div class="layui-input-block">
+                                        <textarea th:text="${userInfoVo.description}"  placeholder="请输入内容" name="description" class="layui-textarea"></textarea>
+                                    </div>
+                                </div>
+                                <div class="layui-form-item">
+                                    <div class="layui-input-block">
+                                        <button class="layui-btn layui-btn-normal" lay-submit lay-filter="saveInfoBtn">确认保存</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="layui-tab-item">
+                            <div class="layui-form layuimini-form">
+                                <input type="hidden" name="type" value="2">
+                                <div class="layui-form-item">
+                                    <label class="layui-form-label required">旧的密码</label>
+                                    <div class="layui-input-block">
+                                        <input type="password" name="oldPassword" lay-verify="required" lay-reqtext="旧的密码不能为空" placeholder="请输入旧的密码"  value="" class="layui-input">
+                                        <tip>填写自己账号的旧的密码。</tip>
+                                    </div>
+                                </div>
+
+                                <div class="layui-form-item">
+                                    <label class="layui-form-label required">新的密码</label>
+                                    <div class="layui-input-block">
+                                        <input type="password" name="password" lay-verify="required" lay-reqtext="新的密码不能为空" placeholder="请输入新的密码"  value="" class="layui-input">
+                                    </div>
+                                </div>
+                                <div class="layui-form-item">
+                                    <label class="layui-form-label required">新的密码</label>
+                                    <div class="layui-input-block">
+                                        <input type="password" name="newPassword" lay-verify="required" lay-reqtext="新的密码不能为空" placeholder="请输入新的密码"  value="" class="layui-input">
+                                    </div>
+                                </div>
+
+                                <div class="layui-form-item">
+                                    <div class="layui-input-block">
+                                        <button class="layui-btn layui-btn-normal" lay-submit lay-filter="savePwdBtn">确认保存</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="/admin/common/js"></div>
+<script>
+    layui.use(['form','miniTab'], function () {
+        let form = layui.form,
+            layer = layui.layer,
+            miniTab = layui.miniTab;
+
+        form.on('submit(saveInfoBtn)', function (data) {
+            $.ajax({
+                type: 'post',
+                url: '/system/userInfo/updateInfoOrPwdById',
+                data: data.field,
+                dataType: 'json',
+                success: function (res) {
+                    if (res.code == 200) {
+                        layer.msg(res.msg, {time: 2000, icon: 1}, function () {
+                            window.location.reload();
+                        });
+                    } else {
+                        layer.msg(res.msg, {time: 2000, icon: 2});
+                    }
+                },
+                error: function (res) {
+                    layer.msg('请求失败', {time: 2000, icon: 2});
+                }
+            });
+            return false;
+        });
+
+        form.on('submit(savePwdBtn)', function (data) {
+            if (data.field.password != data.field.newPassword) {
+                layer.msg('两次输入的密码不一致', {time: 2000, icon: 2});
+                return false;
+            }
+            $.ajax({
+                type: 'post',
+                url: '/system/userInfo/updateInfoOrPwdById',
+                data: data.field,
+                dataType: 'json',
+                success: function (res) {
+                    if (res.code == 200) {
+                        layer.msg(res.msg, {time: 2000, icon: 1}, function () {
+                            if (data.field.type == 2) {
+                                window.location.href = '/logout';
+                            }
+                        });
+                    } else {
+                        layer.msg(res.msg, {time: 2000, icon: 2});
+                    }
+                },
+                error: function (res) {
+                    layer.msg('请求失败', {time: 2000, icon: 2});
+                }
+            });
+            return false;
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro"><head>
+    <div th:replace="/admin/common/head"></div>
+    <link rel="stylesheet" th:href="@{/static/layuimini/js/lay-module/dtree/dtree.css}">
+    <link rel="stylesheet" th:href="@{/static/layuimini/js/lay-module/dtree/font/dtreefont.css}">
+</head>
+<body>
+<div class="layuimini-container">
+    <div class="layuimini-main">
+
+        <form class="layui-form" id="searchForm" lay-filter="searchFormFilter">
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">角色名称</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="name" placeholder="请输入角色名称" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <button type="submit" class="layui-btn layui-btn-sm layui-btn-normal" lay-submit
+                            lay-filter="searchSubmit"><i class="layui-icon"></i>搜索
+                    </button>
+                    <button type="button" class="layui-btn layui-btn-sm layui-btn-primary"
+                            id="searchReset"><i class="layui-icon layui-icon-refresh"></i>重置
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <!-- 表头、表、操作按钮 -->
+        <script type="text/html" id="toolbar">
+            <div class="layui-btn-container">
+                <button class="layui-btn layui-btn-normal layui-btn-sm data-add-btn" lay-event="add"
+                        shiro:hasPermission="system:roleInfo:save">
+                <i class="layui-icon layui-icon-addition"></i>新增
+                </button>
+            </div>
+        </script>
+        <table class="layui-hide" id="currentTableId" lay-filter="currentTableFilter"></table>
+    </div>
+</div>
+
+<div id="dataFormModal" style="display: none; padding: 10px;">
+    <form class="layui-form layuimini-form" id="dataForm" lay-filter="dataFormFilter">
+        <input type="hidden" name="id">
+        <div class="layui-form-item">
+            <label class="layui-form-label required">角色名称</label>
+            <div class="layui-input-block">
+                <input type="text" name="name" lay-verify="required" placeholder="请输入角色名称" autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label required">角色标识</label>
+            <div class="layui-input-block">
+                <input type="text" name="role" lay-verify="required" placeholder="请输入角色标识" autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label required">角色描述</label>
+            <div class="layui-input-block">
+                <input type="text" name="description" lay-verify="required" placeholder="请输入角色描述" autocomplete="off"
+                       class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">分配权限</label>
+            <div class="layui-input-block">
+                <ul id="dataTree" class="dtree" data-id="0"></ul>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button type="submit" class="layui-btn layui-btn-normal" lay-submit lay-filter="dataFormSubmit">保存</button>
+                <button type="button" class="layui-btn layui-btn-primary" id="dataFormReset">取消</button>
+            </div>
+        </div>
+    </form>
+</div>
+<div th:replace="/admin/common/js"></div>
+<script>
+    let roleInfoUpdate = false;
+    let roleInfoDelete = false;
+</script>
+<script shiro:hasPermission="system:roleInfo:update">roleInfoUpdate = true;</script>
+<script shiro:hasPermission="system:roleInfo:delete">roleInfoDelete = true;</script>
+<script>
+    layui.use(['element', 'form', 'table', 'dtree'], function () {
+        let $ = layui.jquery,
+            form = layui.form,
+            dtree = layui.dtree,
+            table = layui.table;
+
+        let active = {
+            dataModelType: 1,
+            openDataFormModal() {
+                let title = active.dataModelType == 1 ? '新增表单' : '编辑表单';
+                layer.open({
+                    title: title
+                    , type: 1
+                    , content: $('#dataFormModal')
+                    , area: ['600px', '500px']
+                    , maxmin: true
+                    , cancel: function () {
+                        active.closeDataFormModal();
+                    }
+                });
+            },
+            closeDataFormModal() {
+                $('#dataForm')[0].reset();
+                dataTree.menubarMethod().unCheckAll();
+                layer.closeAll();
+            },
+            resetTable(data) {
+                table.reload('currentTableId', {page: {curr: 1}, where: data}, 'data');
+            }
+        };
+
+        table.render({
+            elem: '#currentTableId',
+            method: 'post',
+            url: '/system/roleInfo/listByTable',
+            toolbar: '#toolbar',
+            defaultToolbar: ['filter', 'exports', 'print'],
+            page: true,
+            limit: 20,
+            limits: [20, 40, 60, 80, 100],
+            cols: [ [
+                {type: "numbers", title: '序号'},
+                {field: 'name', title: '角色名称'},
+                {field: 'role', title: '角色标识'},
+                // {field: 'resourceName', title: '权限'},
+                {field: 'description', title: '角色描述'},
+                {field: 'createTime', title: '创建时间'},
+                {
+                    title: '操作', width: 120, align: "center", templet: function () {
+                        let dom = '';
+                        if (roleInfoUpdate) dom += '<a class="layui-btn layui-btn-normal layui-btn-xs" lay-event="edit">编辑</a>';
+                        if (roleInfoDelete) dom += '<a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a>';
+                        return dom;
+                    }
+                }
+            ]]
+        });
+
+        let dataTree = dtree.render({
+            elem: "#dataTree",
+            url: "/system/resourceInfo/listByDTree",
+            checkbar: true,
+            checkbarType: "all",
+            menubar: true,
+        });
+
+        // 监听搜索
+        form.on('submit(searchSubmit)', function (data) {
+            active.resetTable(data.field);
+            return false;
+        });
+        // 监听重置
+        $('#searchReset').on('click', function () {
+            $('#searchForm')[0].reset();
+            active.resetTable(form.val('searchFormFilter'));
+        });
+
+        // 监听头部按钮
+        table.on('toolbar(currentTableFilter)', function (obj) {
+            if (obj.event === 'add') {
+                active.dataModelType = 1;
+                active.openDataFormModal();
+            }
+        });
+
+        // 监听行按钮
+        table.on('tool(currentTableFilter)', function (obj) {
+            let data = obj.data;
+            if (obj.event === 'edit') {
+                // 回显数据
+                active.dataModelType = 2;
+                form.val('dataFormFilter', data);
+                dtree.chooseDataInit("dataTree", data.resourceIds);
+                active.openDataFormModal();
+            } else if (obj.event === 'del') {
+                layer.confirm('确定删除该数据吗？', function (index) {
+                    $.ajax({
+                        type: 'post',
+                        url: '/system/roleInfo/deleteById',
+                        data: {id: data.id},
+                        dataType: 'json',
+                        success: function (res) {
+                            if (res.code == 200) {
+                                layer.msg(res.msg, {time: 2000, icon: 1}, function () {
+                                    window.location.reload();
+                                });
+                            } else {
+                                layer.msg(res.msg, {time: 2000, icon: 2});
+                            }
+                        },
+                        error: function (res) {
+                            layer.msg('请求失败', {time: 2000, icon: 2});
+                        }
+                    });
+                });
+            }
+        });
+
+        // 监听表单取消
+        $('#dataFormReset').on('click', function () {
+            active.closeDataFormModal();
+        });
+        //监听表单提交
+        form.on('submit(dataFormSubmit)', function (data) {
+            let param = dtree.getCheckbarNodesParam('dataTree');
+            let resIds = [];
+            if (!validator.isEmpty(param)) {
+                for (let i = 0; i < param.length; i++) {
+                    resIds.push(param[i].nodeId);
+                }
+                data.field.resourceIds = resIds.join(',');
+            }
+            $.ajax({
+                type: 'post',
+                url: active.dataModelType == 1 ? '/system/roleInfo/save' : '/system/roleInfo/updateById',
+                data: data.field,
+                dataType: 'json',
+                success: function (res) {
+                    if (res.code == 200) {
+                        layer.msg(res.msg, {time: 2000, icon: 1}, function () {
+                            window.location.reload();
+                        });
+                    } else {
+                        layer.msg(res.msg, {time: 2000, icon: 2});
+                    }
+                },
+                error: function (res) {
+                    layer.msg('请求失败', {time: 2000, icon: 2});
+                }
+            });
+            return false;
+        });
+    });
+</script>
+
+</body>
+</html>
